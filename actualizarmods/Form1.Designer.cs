@@ -84,6 +84,7 @@
             label3.Size = new Size(101, 15);
             label3.TabIndex = 3;
             label3.Text = "Notas de version1";
+            label3.Click += label3_Click;
             // 
             // textBox1
             // 

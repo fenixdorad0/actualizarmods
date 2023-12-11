@@ -196,7 +196,12 @@ namespace actualizarmods
 
         private void button4_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(direccionIP+":"+puerto);
+            MessageBox.Show(direccionIP + ":" + puerto);
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
