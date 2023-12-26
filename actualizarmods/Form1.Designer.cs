@@ -36,23 +36,27 @@
             textBox1 = new TextBox();
             textBox2 = new TextBox();
             buttonObtenerIP = new Button();
+            labelIP = new Label();
+            button1 = new Button();
+            button2 = new Button();
+            button3 = new Button();
             SuspendLayout();
             // 
             // buttonDescargar
             // 
-            buttonDescargar.Location = new Point(12, 79);
+            buttonDescargar.Location = new Point(12, 128);
             buttonDescargar.Name = "buttonDescargar";
-            buttonDescargar.Size = new Size(75, 23);
+            buttonDescargar.Size = new Size(137, 23);
             buttonDescargar.TabIndex = 0;
-            buttonDescargar.Text = "Descargar";
+            buttonDescargar.Text = "Descargar Mods";
             buttonDescargar.UseVisualStyleBackColor = true;
-            buttonDescargar.Click += button1_Click;
+            buttonDescargar.Click += buttonDescargar_Click_1;
             // 
             // buttonIniciarServer
             // 
-            buttonIniciarServer.Location = new Point(93, 79);
+            buttonIniciarServer.Location = new Point(12, 70);
             buttonIniciarServer.Name = "buttonIniciarServer";
-            buttonIniciarServer.Size = new Size(75, 23);
+            buttonIniciarServer.Size = new Size(137, 23);
             buttonIniciarServer.TabIndex = 1;
             buttonIniciarServer.Text = "Iniciar servidor";
             buttonIniciarServer.UseVisualStyleBackColor = true;
@@ -79,12 +83,11 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(12, 125);
+            label3.Location = new Point(12, 183);
             label3.Name = "label3";
             label3.Size = new Size(101, 15);
             label3.TabIndex = 3;
             label3.Text = "Notas de version1";
-            label3.Click += label3_Click;
             // 
             // textBox1
             // 
@@ -113,11 +116,54 @@
             buttonObtenerIP.UseVisualStyleBackColor = true;
             buttonObtenerIP.Click += button3_Click;
             // 
+            // labelIP
+            // 
+            labelIP.AutoSize = true;
+            labelIP.Location = new Point(271, 9);
+            labelIP.Name = "labelIP";
+            labelIP.Size = new Size(101, 15);
+            labelIP.TabIndex = 7;
+            labelIP.Text = "Que esta pasando";
+            // 
+            // button1
+            // 
+            button1.Location = new Point(12, 99);
+            button1.Name = "button1";
+            button1.Size = new Size(137, 23);
+            button1.TabIndex = 8;
+            button1.Text = "Descargar lista mods";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
+            // button2
+            // 
+            button2.Location = new Point(12, 223);
+            button2.Name = "button2";
+            button2.Size = new Size(137, 23);
+            button2.TabIndex = 9;
+            button2.Text = "Descargar Mods";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click_1;
+            // 
+            // button3
+            // 
+            button3.Location = new Point(12, 252);
+            button3.Name = "button3";
+            button3.Size = new Size(137, 23);
+            button3.TabIndex = 10;
+            button3.Text = "Descargar Mods";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click_1;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(441, 160);
+            ClientSize = new Size(441, 327);
+            Controls.Add(button3);
+            Controls.Add(button2);
+            Controls.Add(button1);
+            Controls.Add(labelIP);
             Controls.Add(buttonObtenerIP);
             Controls.Add(textBox2);
             Controls.Add(textBox1);
@@ -128,6 +174,7 @@
             Controls.Add(buttonDescargar);
             Name = "Form1";
             Text = "Launcher by fenixdorad0";
+            Load += Form1_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -142,5 +189,9 @@
         private TextBox textBox1;
         private TextBox textBox2;
         private Button buttonObtenerIP;
+        private Label labelIP;
+        private Button button1;
+        private Button button2;
+        private Button button3;
     }
 }
