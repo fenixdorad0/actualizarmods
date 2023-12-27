@@ -10,6 +10,7 @@ using System;
 using System.IO;
 using System.Security.Principal;
 using System.Text;
+using System.Diagnostics;
 
 
 
@@ -26,343 +27,62 @@ namespace actualizarmods
         public Form1()
         {
             InitializeComponent();
-
-        }
-        public static List<string> GetFilesFromIP(string ip, int puerto)
-        {
-            string url = $"ftp://{ip}:{14147}/";
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(url);
-            request.Method = WebRequestMethods.Ftp.ListDirectory;
-
-            List<string> filesList = new List<string>();
-
-            try
-            {
-                using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
-                {
-                    Stream dataStream = response.GetResponseStream();
-                    StreamReader reader = new StreamReader(dataStream);
-                    string content = reader.ReadToEnd();
-                    filesList = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                    reader.Close();
-                }
-            }
-            catch (WebException ex)
-            {
-                MessageBox.Show($"Error: {ex.Status}\n{ex.Message}");
-            }
-
-            return filesList;
-        }
-
-
-        static void GenerarConfiguracion()
-        {
-            string carpetaMods = @"F:\server youtube mods y plugin test\mods";
-            List<ModInfo> mods = new List<ModInfo>();
-
-            foreach (string archivoMod in Directory.GetFiles(carpetaMods, "*.jar"))
-            {
-                mods.Add(new ModInfo { Name = Path.GetFileName(archivoMod) });
-            }
-
-            Configuracion configuracion = new Configuracion { Mods = mods };
-
-            string jsonConfiguracion = Newtonsoft.Json.JsonConvert.SerializeObject(configuracion, Newtonsoft.Json.Formatting.Indented);
-
-            File.WriteAllText("configActualizarmods.json", jsonConfiguracion);
-        }
-
-        class Configuracion
-        {
-            public List<ModInfo> Mods { get; set; }
-        }
-
-        class ModInfo
-        {
-            public string Name { get; set; }
-        }
-
-        private async void buttonDescargar_Click()
-        {
-            label1.Text = "Descargando archivo por favor espere...";
-            await DescargarArchivosAsync();
-
-            label1.Text = "Archivos descargados";
-
-        }
-        private void button2_Click(object sender, EventArgs e)
-        {
-
-            string miDireccionIP = ObtenerDireccionIP();
-
-            if (miDireccionIP == "192.168.0.200")
-            {
-                label2.Text = "Eres el: servidor";
-
-                label1.Text = "iniciando Servidor porfavor espere";
-                IniciarServidorHttp(); // Iniciar el servidor HTTP cuando se carga el formulario
-                label1.Text = "Servidor iniciado";
-            }
-            else
-            {
-                label2.Text = "Eres el: eres el cliente usa el otro boton";
-
-            }
-
+            funcion();
 
         }
 
-        static string ObtenerDireccionIP()
-        {
-            string direccionIP = string.Empty;
-
-            try
-            {
-                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
-                {
-                    socket.Connect("8.8.8.8", 65530); // Con�ctate a un servidor externo
-                    IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                    direccionIP = endPoint.Address.ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al obtener la direcci�n IP: {ex.Message}");
-            }
-
-            return direccionIP;
-        }
-
-        private async Task DescargarArchivosAsync()
-        {
-
-
-            string carpetaMods = @"F:\server youtube mods y plugin test\mods";
-            string[] archivos = Directory.GetFiles(carpetaMods, "*.jar");
-
-            using (HttpClient cliente = new HttpClient())
-            {
-
-                foreach (string archivo in archivos)
-                {
-                    string nombreArchivo = Path.GetFileName(archivo);
-                    string urlDescarga = $"http://{direccionIP}:{puerto}/{nombreArchivo}";
-                    string rutaGuardado = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft", "mods", nombreArchivo);
-
-                    try
-                    {
-                        HttpResponseMessage response = await cliente.GetAsync(urlDescarga);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            using (Stream stream = await response.Content.ReadAsStreamAsync())
-                            using (FileStream fileStream = new FileStream(rutaGuardado, FileMode.Create, FileAccess.Write, FileShare.None))
-                            {
-                                await stream.CopyToAsync(fileStream);
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show($"Error al descargar el archivo {nombreArchivo}: {response.StatusCode}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message + " El archivo no encontrado es: " + urlDescarga);
-                    }
-                }
-            }
-        }
-
-        private void IniciarServidorHttp()
-        {
-            string carpetaMods = @"F:\server youtube mods y plugin test\mods";
-            string url = $"http://{direccionIP}:{puerto}/";
-
-            // Inicia el servidor HTTP en un hilo separado
-            Task.Run(() =>
-            {
-                using (HttpListener httpListener = new HttpListener())
-                {
-                    httpListener.Prefixes.Add(url);
-                    httpListener.Start();
-                    Console.WriteLine($"Servidor HTTP iniciado en {url}");
-
-                    // Espera solicitudes
-                    while (true)
-                    {
-                        HttpListenerContext context = httpListener.GetContext();
-                        HttpListenerResponse response = context.Response;
-
-                        // Obtiene el nombre del archivo de la URL
-                        string archivoSolicitado = Path.GetFileName(context.Request.Url.AbsolutePath);
-
-                        // Ruta completa del archivo solicitado
-                        string rutaArchivo = Path.Combine(carpetaMods, archivoSolicitado);
-
-                        if (File.Exists(rutaArchivo))
-                        {
-                            // Configura el tipo de contenido binario
-                            response.ContentType = "application/octet-stream";
-
-                            using (Stream output = response.OutputStream)
-                            {
-                                // Lee el archivo solicitado y env�alo como respuesta
-                                byte[] contenido = File.ReadAllBytes(rutaArchivo);
-                                output.Write(contenido, 0, contenido.Length);
-                            }
-                        }
-                        else
-                        {
-                            // Enviar una respuesta de error si el archivo no se encuentra
-                            response.StatusCode = 404;
-                        }
-                        response.Close();
-                    }
-                }
-            });
-        }
-
-
-        // Agregar al inicio de tu clase
-        private static readonly HttpClient cliente = new HttpClient(new HttpClientHandler()
-        {
-            //AllowAutoRedirect = true // Permite redirecciones automáticas
-        })
-        {
-            //Timeout = TimeSpan.FromSeconds(30) // Establece un tiempo de espera de 30 segundos
-        };
-
-        private async Task<List<string>> ObtenerListaModsRemota(string direccionIP, int puerto)
-        {
-            List<string> listaMods = new List<string>();
-
-            string urlLista = $"http://{direccionIP}:{puerto}/";
-            Console.WriteLine($"URL: {urlLista}");
-
-            try
-            {
-                HttpResponseMessage response = await cliente.GetAsync(urlLista);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string json = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"JSON: {json}");
-
-                    listaMods = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(json);
-                    MostrarMensajeEnUI(json);
-                }
-                else
-                {
-                    MostrarMensajeEnUI($"Error en la respuesta HTTP: {response.StatusCode}\nURL: {urlLista}");
-                }
-            }
-            catch (HttpRequestException hrex)
-            {
-                MostrarMensajeEnUI($"Error de red al obtener lista de mods: {hrex.Message}");
-            }
-            catch (TaskCanceledException)
-            {
-                MostrarMensajeEnUI($"La solicitud fue cancelada por un timeout o el usuario.");
-            }
-            catch (Exception ex)
-            {
-                MostrarMensajeEnUI($"Error al obtener lista de mods: {ex.Message}\nStackTrace: {ex.StackTrace}");
-            }
-
-            return listaMods;
-        }
-
-        // Separar la lógica de la interfaz de usuario en un método distinto
-        private void MostrarMensajeEnUI(string mensaje)
-        {
-            this.Invoke(new Action(() =>
-            {
-                MessageBox.Show(mensaje);
-            }));
-        }
-
-
-
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button3_Click(object sender, EventArgs e)
+        private bool IsInternetConnectionAvailable()
         {
             try
             {
-                direccionIP = textBox1.Text;
-                puerto = int.Parse(textBox2.Text);
-
-                labelIP.Text = direccionIP + ":" + Convert.ToString(puerto);
+                using (var client = new WebClient())
+                using (var stream = client.OpenRead("http://www.google.com"))
+                {
+                    return true;
+                }
             }
-            catch (Exception ex)
+            catch
             {
-
+                return false;
             }
-
-
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show(direccionIP + ":" + puerto);
-        }
-
-        private void buttonDescargar_Click_1(object sender, EventArgs e)
-        {
-
-
-            buttonDescargar_Click();
-
-
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
-
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            ObtenerListaModsRemota(direccionIP, puerto);
-
-            GetFilesFromIP(direccionIP, puerto);
-
-
-            List<string> filesList = GetFilesFromIP(direccionIP, puerto);
-
-            if (filesList != null && filesList.Count > 0)
-            {
-                string filesString = string.Join("\n", filesList);
-                MessageBox.Show(filesString, "Lista de Archivos");
-            }
-            else
-            {
-                MessageBox.Show("No se encontraron archivos o no se pudo conectar al servidor.", "Error");
-            }
-            MessageBox.Show("se acabo");
-
         }
 
         private void button2_Click_1(object sender, EventArgs e)
         {
-            string ftpUrl = "ftp://192.168.0.200/";
-            string localPath = @"C:\Users\fenix3090\Documents\Arduino\";
-            string ftpUsername = "fenix";
-            string ftpPassword = ""; // Sin contraseña
 
-            FtpWebRequest listRequest = (FtpWebRequest)WebRequest.Create(ftpUrl);
-            listRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            listRequest.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+            DialogResult result = MessageBox.Show("¿deses borrar los mods anteriores?", "Confirmación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            List<string> lines = new List<string>();
+            if (result == DialogResult.Yes)
+            {
+                borrarMods();
+                MessageBox.Show("Archivos eliminados con éxito.");
+            }
+            else
+            {
+                MessageBox.Show("Se han conservado los antiguos mods y se han descargado los nuevos");
+            }
 
             try
             {
+                if (!IsInternetConnectionAvailable())
+                {
+                    MessageBox.Show("No hay conexión a Internet. Verifica tu conexión e intenta nuevamente.");
+                    return;
+                }
+
+                string ftpUrl = "ftp://" + direccionIP + "/";
+                //string localPath = "@C:\\Users\\Fenixdorad0\\AppData\\Roaming\\.minecraft\\mods";
+                string localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft", "mods");
+                string ftpUsername = "fenix";
+                string ftpPassword = ""; // Sin contraseña
+                labelState.Text = "Descargando por favor espere";
+
+                FtpWebRequest listRequest = (FtpWebRequest)WebRequest.Create(ftpUrl);
+                listRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+                listRequest.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+
+                List<string> lines = new List<string>();
+
                 using (FtpWebResponse listResponse = (FtpWebResponse)listRequest.GetResponse())
                 using (Stream listStream = listResponse.GetResponseStream())
                 using (StreamReader listReader = new StreamReader(listStream))
@@ -375,14 +95,11 @@ namespace actualizarmods
 
                 foreach (string line in lines)
                 {
-                    // Asumimos que el servidor FTP devuelve los nombres de archivo en la última columna
                     string fileName = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).Last();
 
-                    // Si no es un archivo .jar, continuar con el siguiente archivo
                     if (!fileName.ToLower().EndsWith(".jar"))
                         continue;
 
-                    // Crear solicitud FTP para descargar el archivo .jar
                     FtpWebRequest downloadRequest = (FtpWebRequest)WebRequest.Create(ftpUrl + fileName);
                     downloadRequest.Method = WebRequestMethods.Ftp.DownloadFile;
                     downloadRequest.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
@@ -394,72 +111,165 @@ namespace actualizarmods
                         sourceStream.CopyTo(targetStream);
                     }
                 }
-
+                labelState.Text = "Descargado";
                 MessageBox.Show("Todos los archivos .jar han sido descargados con éxito.");
+            }
+            catch (WebException webEx)
+            {
+                if (webEx.Response != null)
+                {
+                    FtpWebResponse ftpResponse = (FtpWebResponse)webEx.Response;
+                    MessageBox.Show($"Error de FTP: {ftpResponse.StatusCode} - {ftpResponse.StatusDescription}");
+                }
+                else
+                {
+                    MessageBox.Show("Ha ocurrido un error durante la descarga: " + webEx.Message);
+                }
+                labelState.Text = "Error en la descarga";
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ha ocurrido un error durante la descarga: " + ex.Message);
+                labelState.Text = "Error en la descarga";
             }
         }
 
-        private void button3_Click_1(object sender, EventArgs e)
+        void borrarMods()
         {
-            // Carpeta que contiene los archivos que deseas compartir
-            string carpetaArchivos = @"C:\server youtube mods y plugin test\mods";
+            string localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft", "mods");
 
-            // URL base del servidor HTTP
-            MessageBox.Show("coma monda");
-            string urlBase = "http://localhost:8080/";
-
-            // Inicia el servidor HTTP en un hilo separado
-            Thread servidorThread = new Thread(() =>
+            if (Directory.Exists(localPath))
             {
-                using (HttpListener listener = new HttpListener())
+                try
                 {
-                    listener.Prefixes.Add(urlBase);
+                    DirectoryInfo directory = new DirectoryInfo(localPath);
 
-                    listener.Start();
-
-                     Console.WriteLine($"Servidor HTTP iniciado en {urlBase}");
-
-                    while (true)
+                    // Elimina cada archivo dentro de la carpeta
+                    foreach (FileInfo file in directory.GetFiles())
                     {
-                        HttpListenerContext context = listener.GetContext();
-                        HttpListenerRequest request = context.Request;
+                        file.Delete();
+                    }
 
-                        // Obtiene el nombre del archivo solicitado
-                        string archivoSolicitado = request.Url.LocalPath.TrimStart('/');
+                    MessageBox.Show("Archivos eliminados con éxito.");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error al eliminar archivos: " + ex.Message);
+                }
+            }
+            else
+            {
+                MessageBox.Show("La carpeta no existe.");
+            }
+        }
 
-                        // Combina la ruta de la carpeta con el nombre del archivo solicitado
-                        string rutaCompleta = System.IO.Path.Combine(carpetaArchivos, archivoSolicitado);
+        // Función IsInternetConnectionAvailable()...
+        void funcion()
+        {
+            try
+            {
+                string GetPublicIpAddress()
+                {
+                    using (HttpClient httpClient = new HttpClient())
+                    {
+                        string apiUrl = "https://httpbin.org/ip";
 
-                        // Responde con el archivo solicitado o un mensaje de error si no existe
-                        if (System.IO.File.Exists(rutaCompleta))
+                        HttpResponseMessage response = httpClient.GetAsync(apiUrl).Result;
+
+                        if (response.IsSuccessStatusCode)
                         {
-                            byte[] archivoBytes = System.IO.File.ReadAllBytes(rutaCompleta);
-                            context.Response.OutputStream.Write(archivoBytes, 0, archivoBytes.Length);
+                            string jsonResponse = response.Content.ReadAsStringAsync().Result;
+                            dynamic jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(jsonResponse);
+                            string publicIp = jsonObject.origin;
+                            return publicIp;
                         }
                         else
                         {
-                            string mensajeError = "Archivo no encontrado";
-                            byte[] errorBytes = System.Text.Encoding.UTF8.GetBytes(mensajeError);
-                            context.Response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
+                            throw new Exception("Error al obtener la dirección IP pública. Código de estado: " + response.StatusCode);
                         }
-
-                        context.Response.Close();
                     }
                 }
-            });
-            //servidorThread.Start();
 
-            //Console.WriteLine("Presiona cualquier tecla para detener el servidor.");
-            //Console.ReadKey();
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        string publicIp = GetPublicIpAddress();
+                        //MessageBox.Show("Tu dirección IP pública es: " + publicIp);
 
-            // Detiene el servidor cuando se presiona una tecla
-            //servidorThread.Abort();
+                        // Aquí puedes realizar la lógica adicional según tu necesidad.
+                        // Por ejemplo, cambiar la dirección IP como lo has mencionado.
+                        if (publicIp == "186.31.27.110")
+                        {
+                            direccionIP = "192.168.0.200";
+                        }
+                        else
+                        {
+                            direccionIP = "186.31.27.110";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error al obtener la dirección IP pública: " + ex.Message);
+                    }
+                }).Wait(); // Espera la finalización de la tarea antes de continuar con la ejecución.
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error general: " + ex.Message);
+            }
         }
-            
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Ruta al archivo JAR que deseas abrir
+                string jarPath = @"E:\aplicaciones c#\actualizarmods\actualizarmods\bin\Debug\net8.0-windows\forge-1.20.1-47.2.19-installer.jar";
+
+                // Configura el proceso de inicio
+                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", $"/c start \"\" \"{jarPath}\"")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                // Inicia el proceso
+                using (Process process = new Process() { StartInfo = psi })
+                {
+                    process.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Ruta al archivo JAR que deseas abrir
+                string jarPath = @"E:\aplicaciones c#\actualizarmods\actualizarmods\bin\Debug\net8.0-windows\jdk-21_windows-x64_bin.exe";
+
+                // Configura el proceso de inicio
+                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", $"/c start \"\" \"{jarPath}\"")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                // Inicia el proceso
+                using (Process process = new Process() { StartInfo = psi })
+                {
+                    process.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
     }
 }
