@@ -28,37 +28,29 @@
         /// </summary>
         private void InitializeComponent()
         {
-            label3 = new Label();
             buttonDescargarFtp = new Button();
             labelState = new Label();
             button1 = new Button();
             button2 = new Button();
             label1 = new Label();
+            button3 = new Button();
+            label2 = new Label();
             SuspendLayout();
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(12, 9);
-            label3.Name = "label3";
-            label3.Size = new Size(251, 15);
-            label3.TabIndex = 3;
-            label3.Text = "Recuerda abrir el programa como admistrador";
             // 
             // buttonDescargarFtp
             // 
-            buttonDescargarFtp.Location = new Point(12, 95);
+            buttonDescargarFtp.Location = new Point(92, 111);
             buttonDescargarFtp.Name = "buttonDescargarFtp";
-            buttonDescargarFtp.Size = new Size(137, 23);
+            buttonDescargarFtp.Size = new Size(170, 23);
             buttonDescargarFtp.TabIndex = 9;
-            buttonDescargarFtp.Text = "Descargar Mods";
+            buttonDescargarFtp.Text = "Descargar y actualizar Mods";
             buttonDescargarFtp.UseVisualStyleBackColor = true;
             buttonDescargarFtp.Click += button2_Click_1;
             // 
             // labelState
             // 
             labelState.AutoSize = true;
-            labelState.Location = new Point(12, 121);
+            labelState.Location = new Point(113, 152);
             labelState.Name = "labelState";
             labelState.Size = new Size(120, 15);
             labelState.TabIndex = 10;
@@ -66,9 +58,9 @@
             // 
             // button1
             // 
-            button1.Location = new Point(12, 66);
+            button1.Location = new Point(92, 57);
             button1.Name = "button1";
-            button1.Size = new Size(137, 23);
+            button1.Size = new Size(170, 23);
             button1.TabIndex = 11;
             button1.Text = "Instalar forge";
             button1.UseVisualStyleBackColor = true;
@@ -76,9 +68,9 @@
             // 
             // button2
             // 
-            button2.Location = new Point(12, 37);
+            button2.Location = new Point(92, 28);
             button2.Name = "button2";
-            button2.Size = new Size(137, 23);
+            button2.Size = new Size(170, 23);
             button2.TabIndex = 12;
             button2.Text = "Instalar Java";
             button2.UseVisualStyleBackColor = true;
@@ -87,23 +79,44 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(12, 148);
+            label1.Location = new Point(92, 183);
             label1.Name = "label1";
             label1.Size = new Size(170, 15);
             label1.TabIndex = 13;
             label1.Text = "Galaxy Worlds IP: 186.31.27.110";
             // 
+            // button3
+            // 
+            button3.Location = new Point(92, 83);
+            button3.Name = "button3";
+            button3.Size = new Size(170, 23);
+            button3.TabIndex = 14;
+            button3.Text = "Instalar SkLauncher";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(25, 217);
+            label2.Name = "label2";
+            label2.Size = new Size(320, 15);
+            label2.TabIndex = 15;
+            label2.Text = "Para ejecutar correctamente Mods isntala y usa SKLauncher";
+            label2.Click += label2_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(441, 280);
+            ClientSize = new Size(366, 274);
+            Controls.Add(label2);
+            Controls.Add(button3);
             Controls.Add(label1);
             Controls.Add(button2);
             Controls.Add(button1);
             Controls.Add(labelState);
             Controls.Add(buttonDescargarFtp);
-            Controls.Add(label3);
             Name = "Form1";
             Text = "Launcher por Fenixdorad0";
             ResumeLayout(false);
@@ -111,11 +124,12 @@
         }
 
         #endregion
-        private Label label3;
         private Button buttonDescargarFtp;
         private Label labelState;
         private Button button1;
         private Button button2;
         private Label label1;
+        private Button button3;
+        private Label label2;
     }
 }

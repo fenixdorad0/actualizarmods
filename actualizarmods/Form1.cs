@@ -19,11 +19,12 @@ namespace actualizarmods
 {
     public partial class Form1 : Form
     {
-        //private string carpetaMods = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft", "mods");
 
-        private string direccionIP = "192.168.0.200";
-        private int puerto = 9595;
-        private List<string> listaMods = new List<string>();
+        private string direccionIPLocal = "192.168.0.200";
+        private string IPservidor = "186.31.27.110";
+        private string ftpUsername = "prueba";
+        private string ftpPassword = "";
+
         public Form1()
         {
             InitializeComponent();
@@ -49,8 +50,9 @@ namespace actualizarmods
 
         private void button2_Click_1(object sender, EventArgs e)
         {
+            labelState.Text = "intentando descargar mods";
 
-            DialogResult result = MessageBox.Show("¿deses borrar los mods anteriores?", "Confirmación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult result = MessageBox.Show("¿Deseas borrar los mods anteriores?", "Confirmación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
@@ -70,12 +72,10 @@ namespace actualizarmods
                     return;
                 }
 
-                string ftpUrl = "ftp://" + direccionIP + "/";
-                //string localPath = "@C:\\Users\\Fenixdorad0\\AppData\\Roaming\\.minecraft\\mods";
+                string ftpUrl = "ftp://" + direccionIPLocal + "/";
                 string localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft", "mods");
                 string ftpUsername = "fenix";
-                string ftpPassword = ""; // Sin contraseña
-                labelState.Text = "Descargando por favor espere";
+                labelState.Text = "Descargando, por favor espere";
 
                 FtpWebRequest listRequest = (FtpWebRequest)WebRequest.Create(ftpUrl);
                 listRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
@@ -100,15 +100,27 @@ namespace actualizarmods
                     if (!fileName.ToLower().EndsWith(".jar"))
                         continue;
 
-                    FtpWebRequest downloadRequest = (FtpWebRequest)WebRequest.Create(ftpUrl + fileName);
-                    downloadRequest.Method = WebRequestMethods.Ftp.DownloadFile;
-                    downloadRequest.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+                    string localFilePath = Path.Combine(localPath, fileName);
 
-                    using (FtpWebResponse downloadResponse = (FtpWebResponse)downloadRequest.GetResponse())
-                    using (Stream sourceStream = downloadResponse.GetResponseStream())
-                    using (Stream targetStream = File.Create(Path.Combine(localPath, fileName)))
+                    // Verificar si el archivo ya existe en la carpeta local
+                    if (File.Exists(localFilePath))
                     {
-                        sourceStream.CopyTo(targetStream);
+                        // Si el archivo ya existe, puedes decidir omitirlo o mostrar un mensaje
+                        labelState.Text = ($"El archivo {fileName} ya existe. No se descargará nuevamente.");
+                    }
+                    else
+                    {
+                        // Descargar el archivo si no existe
+                        FtpWebRequest downloadRequest = (FtpWebRequest)WebRequest.Create(ftpUrl + fileName);
+                        downloadRequest.Method = WebRequestMethods.Ftp.DownloadFile;
+                        downloadRequest.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+
+                        using (FtpWebResponse downloadResponse = (FtpWebResponse)downloadRequest.GetResponse())
+                        using (Stream sourceStream = downloadResponse.GetResponseStream())
+                        using (Stream targetStream = File.Create(localFilePath))
+                        {
+                            sourceStream.CopyTo(targetStream);
+                        }
                     }
                 }
                 labelState.Text = "Descargado";
@@ -133,6 +145,7 @@ namespace actualizarmods
                 labelState.Text = "Error en la descarga";
             }
         }
+
 
         void borrarMods()
         {
@@ -199,13 +212,13 @@ namespace actualizarmods
 
                         // Aquí puedes realizar la lógica adicional según tu necesidad.
                         // Por ejemplo, cambiar la dirección IP como lo has mencionado.
-                        if (publicIp == "186.31.27.110")
+                        if (publicIp == IPservidor)
                         {
-                            direccionIP = "192.168.0.200";
+                            direccionIPLocal = "192.168.0.200";
                         }
                         else
                         {
-                            direccionIP = "186.31.27.110";
+                            direccionIPLocal = "186.31.27.110";
                         }
                     }
                     catch (Exception ex)
@@ -225,7 +238,7 @@ namespace actualizarmods
             try
             {
                 // Ruta al archivo JAR que deseas abrir
-                string jarPath = @"E:\aplicaciones c#\actualizarmods\actualizarmods\bin\Debug\net8.0-windows\forge-1.20.1-47.2.19-installer.jar";
+                string jarPath = @"forge-1.20.1-47.2.19-installer.jar";
 
                 // Configura el proceso de inicio
                 ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", $"/c start \"\" \"{jarPath}\"")
@@ -250,14 +263,14 @@ namespace actualizarmods
         {
             try
             {
-                // Ruta al archivo JAR que deseas abrir
-                string jarPath = @"E:\aplicaciones c#\actualizarmods\actualizarmods\bin\Debug\net8.0-windows\jdk-21_windows-x64_bin.exe";
+                // URL que deseas abrir
+                string url = "https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe";
 
                 // Configura el proceso de inicio
-                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", $"/c start \"\" \"{jarPath}\"")
+                ProcessStartInfo psi = new ProcessStartInfo
                 {
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    FileName = url,
+                    UseShellExecute = true
                 };
 
                 // Inicia el proceso
@@ -268,8 +281,39 @@ namespace actualizarmods
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
+                Console.WriteLine("Error: " + ex.Message);
             }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // URL que deseas abrir
+                string url = "https://skmedix.pl/bin/_/3.2/x64/SKlauncher-3.2.exe";
+
+                // Configura el proceso de inicio
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                };
+
+                // Inicia el proceso
+                using (Process process = new Process() { StartInfo = psi })
+                {
+                    process.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
